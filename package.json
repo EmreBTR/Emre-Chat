@@ -1,0 +1,17 @@
+{
+  "name": "emrecloud-chat-assets",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "alpinejs": "^3.14.9",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17"
+  },
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i public_html/assets/css/input.css -o public_html/assets/css/app.css --minify",
+    "build:alpine": "node scripts/copy-alpine.mjs",
+    "build": "npm run build:css && npm run build:alpine"
+  }
+}
+

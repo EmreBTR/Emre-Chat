@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 5 10 25;
+    --panel: 7 14 34;
+    --fg: 233 238 255;
+    --meshA: 16 185 129;
+    --meshB: 99 102 241;
+  }
+}
+
+@layer utilities {
+  .chat-bg {
+    background:
+      radial-gradient(1000px 600px at 30% 0%, rgba(var(--meshA) / 0.14), transparent 55%),
+      radial-gradient(900px 700px at 90% 100%, rgba(var(--meshB) / 0.12), transparent 55%),
+      radial-gradient(700px 400px at 60% 40%, rgba(244 63 94 / 0.05), transparent 60%);
+  }
+}
+
