@@ -59,6 +59,24 @@ if ($afterId <= 0 && $lastEventId !== '') {
     $afterId = (int) $lastEventId;
 }
 
+$identity = chat_get_identity();
+if (!is_array($identity)) {
+    chat_session_regenerate();
+    $identity = [
+        'is_guest' => true,
+        'guest_name' => chat_make_guest_handle(),
+        'user_id' => null,
+        'role' => 'guest',
+    ];
+    chat_set_identity($identity);
+}
+
+$pk = $_GET['pk'] ?? '';
+if (!is_string($pk) || $pk === '') {
+    $pk = session_id();
+}
+$presenceKey = substr(session_id() . ':' . $pk, 0, 128);
+
 session_write_close();
 
 header('Content-Type: text/event-stream; charset=utf-8');
@@ -80,6 +98,8 @@ echo "retry: 3000\n\n";
 $didBootstrap = false;
 $startedAt = microtime(true);
 $lastBeatAt = $startedAt;
+$lastPresenceAt = 0.0;
+$typingAfterId = 0;
 
 for (;;) {
     if (connection_aborted()) {
@@ -94,6 +114,37 @@ for (;;) {
     if ($now - $lastBeatAt > 20) {
         echo ": heartbeat\n\n";
         $lastBeatAt = $now;
+    }
+
+    if ($groupId !== null && ($lastPresenceAt === 0.0 || ($now - $lastPresenceAt) > 12)) {
+        chat_upsert_presence($pdo, (int) $groupId, $presenceKey, $identity);
+        $count = chat_count_presence($pdo, (int) $groupId);
+        echo "event: presence\n";
+        echo 'data: ' . json_encode(['group_id' => (int) $groupId, 'count' => $count], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n";
+        $lastPresenceAt = $now;
+    }
+
+    if ($groupId !== null) {
+        $typingRows = chat_fetch_typing_after($pdo, (int) $groupId, $typingAfterId, 25);
+        if (count($typingRows) > 0) {
+            foreach ($typingRows as $tr) {
+                $tid = (int) ($tr['id'] ?? 0);
+                if ($tid > $typingAfterId) {
+                    $typingAfterId = $tid;
+                }
+
+                $isGuestT = (int) ($tr['is_guest'] ?? 0) === 1;
+                if ((bool) ($identity['is_guest'] ?? false) && $isGuestT && (string) ($tr['guest_name'] ?? '') === (string) ($identity['guest_name'] ?? '')) {
+                    continue;
+                }
+                if (!(bool) ($identity['is_guest'] ?? true) && !$isGuestT && (int) ($tr['user_id'] ?? 0) === (int) ($identity['user_id'] ?? 0)) {
+                    continue;
+                }
+
+                echo "event: typing\n";
+                echo 'data: ' . json_encode($tr, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n";
+            }
+        }
     }
 
     if (!$didBootstrap && $afterId <= 0 && $groupId !== null) {

@@ -75,3 +75,33 @@ CREATE TABLE banned_ips (
   KEY ix_banned_ips_expires (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE realtime_events (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_type ENUM('typing') NOT NULL,
+  group_id BIGINT UNSIGNED NOT NULL,
+  user_id BIGINT UNSIGNED NULL,
+  is_guest TINYINT(1) NOT NULL DEFAULT 0,
+  guest_name VARCHAR(64) NULL,
+  expires_at DATETIME NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY ix_realtime_group_type_id (group_id, event_type, id),
+  KEY ix_realtime_expires (expires_at),
+  CONSTRAINT fk_realtime_group FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE CASCADE,
+  CONSTRAINT fk_realtime_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE presence (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  group_id BIGINT UNSIGNED NOT NULL,
+  presence_key VARCHAR(128) NOT NULL,
+  user_id BIGINT UNSIGNED NULL,
+  is_guest TINYINT(1) NOT NULL DEFAULT 0,
+  guest_name VARCHAR(64) NULL,
+  last_seen_at DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_presence_group_key (group_id, presence_key),
+  KEY ix_presence_group_seen (group_id, last_seen_at),
+  CONSTRAINT fk_presence_group FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE CASCADE,
+  CONSTRAINT fk_presence_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

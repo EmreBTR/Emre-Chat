@@ -53,6 +53,9 @@ $allowed = [
     'fontScale' => null,
     'wallpaper' => null,
     'sounds' => null,
+    'compact' => null,
+    'reduceMotion' => null,
+    'accent' => null,
 ];
 
 $clean = [];
@@ -80,6 +83,20 @@ foreach ($allowed as $k => $rule) {
     }
     if ($k === 'sounds') {
         $clean[$k] = (bool) $v;
+        continue;
+    }
+    if ($k === 'compact') {
+        $clean[$k] = (bool) $v;
+        continue;
+    }
+    if ($k === 'reduceMotion') {
+        $clean[$k] = (bool) $v;
+        continue;
+    }
+    if ($k === 'accent') {
+        if (is_string($v) && preg_match('/^[a-z0-9_]{3,24}$/', $v)) {
+            $clean[$k] = $v;
+        }
         continue;
     }
 }

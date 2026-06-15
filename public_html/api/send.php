@@ -63,6 +63,28 @@ if ($action === 'ack') {
 }
 
 $target = $body['target'] ?? null;
+
+if ($action === 'typing') {
+    if (!is_array($target)) {
+        chat_json_response(['ok' => false, 'error' => 'invalid_target'], 422);
+        exit;
+    }
+    $type = $target['type'] ?? '';
+    if (!is_string($type) || $type !== 'group') {
+        chat_json_response(['ok' => false, 'error' => 'invalid_target'], 422);
+        exit;
+    }
+    $gid = $target['groupId'] ?? 0;
+    $gid = (int) $gid;
+    if ($gid <= 0) {
+        $g = chat_ensure_public_group($pdo);
+        $gid = (int) $g['id'];
+    }
+    chat_insert_typing($pdo, $identity, $gid);
+    chat_json_response(['ok' => true]);
+    exit;
+}
+
 $text = $body['text'] ?? '';
 
 if (!is_array($target) || !is_string($text)) {

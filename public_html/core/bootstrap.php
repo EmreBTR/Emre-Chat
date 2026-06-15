@@ -10,6 +10,7 @@ require __DIR__ . '/auth.php';
 require __DIR__ . '/db.php';
 require __DIR__ . '/moderation.php';
 require __DIR__ . '/chat.php';
+require __DIR__ . '/realtime.php';
 
 chat_start_session($config);
 
